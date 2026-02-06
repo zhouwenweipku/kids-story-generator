@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>宝贝专属故事生成器</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#8b5cf6',
+          },
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gray-50 min-h-screen p-4 md:p-8">
+  <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-md p-6 md:p-8">
+    <h1 class="text-2xl md:text-3xl font-bold text-center text-primary mb-8">🎈 宝贝专属儿童故事生成器</h1>
+
+    <form id="storyForm" class="space-y-5">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-gray-700 font-medium mb-1" for="childName">孩子名字 *</label>
+          <input type="text" id="childName" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="如：小明、朵朵" required>
+        </div>
+        <div>
+          <label class="block text-gray-700 font-medium mb-1" for="childAge">孩子年龄（岁） *</label>
+          <input type="number" id="childAge" min="3" max="12" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="3-12岁" required>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-gray-700 font-medium mb-1" for="childGender">孩子性别 *</label>
+          <select id="childGender" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50" required>
+            <option value="">请选择</option>
+            <option value="男">男</option>
+            <option value="女">女</option>
+            <option value="不限">不限</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-gray-700 font-medium mb-1" for="protagonistType">主角类型 *</label>
+          <select id="protagonistType" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50" required>
+            <option value="">请选择</option>
+            <option value="小公主">小公主</option>
+            <option value="小骑士">小骑士</option>
+            <option value="小恐龙">小恐龙</option>
+            <option value="小猫">小猫</option>
+            <option value="小机器人">小机器人</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-gray-700 font-medium mb-1" for="storyTheme">故事主题 *</label>
+          <select id="storyTheme" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50" required>
+            <option value="">请选择</option>
+            <option value="勇敢冒险">勇敢冒险</option>
+            <option value="友谊">友谊</option>
+            <option value="环保">环保</option>
+            <option value="探索太空">探索太空</option>
+            <option value="学会分享">学会分享</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-gray-700 font-medium mb-1" for="storyScene">故事场景 *</label>
+          <select id="storyScene" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50" required>
+            <option value="">请选择</option>
+            <option value="魔法森林">魔法森林</option>
+            <option value="未来城市">未来城市</option>
+            <option value="海底世界">海底世界</option>
+            <option value="月球">月球</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-gray-700 font-medium mb-1" for="value">传递的价值观（可选）</label>
+        <input type="text" id="value" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="如：乐于助人、团结就是力量">
+      </div>
+
+      <div class="flex justify-center space-x-4 mt-6">
+        <button type="submit" id="generateBtn" class="px-6 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors shadow-sm">生成故事</button>
+        <button type="button" id="readBtn" class="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>朗读故事</button>
+      </div>
+    </form>
+
+    <div id="loading" class="hidden text-center mt-8 text-primary">
+      <p>✨ 正在为宝贝编织专属故事...（30秒内完成）</p>
+    </div>
+
+    <div id="storyResult" class="mt-8 hidden space-y-4">
+      <h2 class="text-xl font-bold text-gray-800 border-b pb-2">📖 专属儿童故事</h2>
+      <div id="storyContent" class="p-4 bg-gray-50 rounded-md whitespace-pre-line leading-relaxed"></div>
+      <div id="illustrationTip" class="text-sm text-gray-600 italic p-2 bg-purple-50 rounded-md">插画提示：</div>
+    </div>
+
+    <div id="errorMsg" class="mt-6 hidden text-red-600 text-center p-2 bg-red-50 rounded-md"></div>
+  </div>
+
+  <script>
+    // ========== 关键修改：填你的通义千问API Key ==========
+    const DASHSCOPE_API_KEY = "sk-a02a4b3262c4495ea7f329b98527e060";
+    // ==================================================
+
+    const form = document.getElementById('storyForm');
+    const generateBtn = document.getElementById('generateBtn');
+    const readBtn = document.getElementById('readBtn');
+    const loading = document.getElementById('loading');
+    const storyResult = document.getElementById('storyResult');
+    const storyContent = document.getElementById('storyContent');
+    const illustrationTip = document.getElementById('illustrationTip');
+    const errorMsg = document.getElementById('errorMsg');
+
+    // 加载历史输入
+    window.onload = () => {
+      const history = localStorage.getItem('storyFormData');
+      if (history) {
+        const data = JSON.parse(history);
+        Object.keys(data).forEach(key => {
+          const el = document.getElementById(key);
+          if (el) el.value = data[key];
+        });
+      }
+    };
+
+    // 表单提交
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = {
+        childName: document.getElementById('childName').value,
+        childAge: document.getElementById('childAge').value,
+        childGender: document.getElementById('childGender').value,
+        protagonistType: document.getElementById('protagonistType').value,
+        storyTheme: document.getElementById('storyTheme').value,
+        storyScene: document.getElementById('storyScene').value,
+        value: document.getElementById('value').value,
+      };
+
+      localStorage.setItem('storyFormData', JSON.stringify(formData));
+
+      loading.classList.remove('hidden');
+      storyResult.classList.add('hidden');
+      errorMsg.classList.add('hidden');
+      generateBtn.disabled = true;
+      readBtn.disabled = true;
+
+      try {
+        // 直接调用通义千问API（不用云函数）
+        const prompt = `# 个性化儿童故事生成指令
+## 角色设定
+- 孩子姓名：${formData.childName}
+- 孩子年龄：${formData.childAge}岁
+- 孩子性别：${formData.childGender}
+- 故事主角类型：${formData.protagonistType}
+- 故事主题：${formData.storyTheme}
+- 故事场景：${formData.storyScene}
+- 核心价值观/教育意义：${formData.value || '无，保持温馨积极即可'}
+
+## 生成要求
+1. 难度适配：${formData.childAge}岁儿童能听懂，3-6岁短句为主，7-12岁可加细节；
+2. 字数控制：严格600-1200字；
+3. 结构：开头引入场景主角+中间主题情节+结尾价值观；
+4. 插画提示：故事末尾单独写「插画提示：XXX」，描述具体画面；
+5. 风格：温馨、有趣、无暴力，主角可以用孩子的名字。`;
+
+        const res = await fetch('https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${DASHSCOPE_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: 'qwen-plus',
+            input: { prompt },
+            parameters: {
+              temperature: 0.7,
+              max_tokens: 2000,
+              result_format: 'text',
+            },
+          }),
+        });
+
+        const data = await res.json();
+        if (res.ok && data.output?.text) {
+          let story = data.output.text;
+          let tip = '无具体提示，可根据故事内容绘制主角场景';
+          const tipIndex = story.indexOf('「插画提示：');
+          if (tipIndex !== -1) {
+            tip = story.slice(tipIndex).replace(/「|」/g, '');
+            story = story.slice(0, tipIndex).trim();
+          }
+
+          storyContent.textContent = story;
+          illustrationTip.textContent = tip;
+          storyResult.classList.remove('hidden');
+          readBtn.disabled = false;
+        } else {
+          throw new Error(data.error || '生成失败，请重试');
+        }
+      } catch (err) {
+        errorMsg.textContent = `出错啦：${err.message}`;
+        errorMsg.classList.remove('hidden');
+      } finally {
+        loading.classList.add('hidden');
+        generateBtn.disabled = false;
+      }
+    });
+
+    // 朗读功能
+    readBtn.addEventListener('click', () => {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(storyContent.textContent);
+      utterance.lang = 'zh-CN';
+      utterance.rate = 0.9;
+      utterance.pitch = 1.2;
+      window.speechSynthesis.speak(utterance);
+    });
+  </script>
+</body>
+</html>
